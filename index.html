@@ -117,26 +117,290 @@
     margin:6px 0 30px;
   }
 
-  /* ---------- Two-column game layout ---------- */
+  /* ---------- Three-column game layout ---------- */
   .game-layout{
     width:100%;
-    max-width:1180px;
+    max-width:1360px;
     display:grid;
-    grid-template-columns:1.15fr 1fr;
-    gap:40px;
+    grid-template-columns:minmax(300px, 0.95fr) 1.2fr 1fr;
+    gap:28px;
     align-items:start;
+    justify-content:center;
   }
-  @media (max-width:880px){
+  @media (max-width:1180px){
     .game-layout{ grid-template-columns:1fr; }
+    .teams-column{ order:-1; width:100%; max-width:560px; margin:0 auto; }
   }
 
-  /* ---------- Puzzle panel (left) ---------- */
+  /* On wide screens, keep teams/puzzle/wheel as three sticky-aligned columns
+     so nothing is ever height-clipped or gets its own internal scrollbar —
+     the whole page just scrolls normally if content runs tall. */
+  @media (min-width:1500px){
+    .game-layout{
+      grid-template-columns:340px minmax(0, 560px) 460px;
+      max-width:1400px;
+      justify-content:center;
+    }
+    .teams-column{
+      position:sticky;
+      top:104px;
+      align-self:start;
+      width:100%;
+    }
+    .wheel-panel{
+      position:sticky;
+      top:104px;
+      align-self:start;
+      width:100%;
+    }
+    .wheel-wrap{ width:100%; max-width:420px; }
+  }
+
+  /* ---------- Teams column (far left) ---------- */
+  .teams-column{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-self:start;
+  }
+  .teams-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 2px;
+  }
+  .teams-toolbar h2{
+    font-family:'Bebas Neue', sans-serif;
+    letter-spacing:0.1em;
+    font-size:1.35rem;
+    margin:0;
+    color:var(--gold-2);
+  }
+  .add-team-btn{
+    font-family:'Poppins', sans-serif;
+    font-weight:700;
+    font-size:0.68rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:6px 14px;
+    border-radius:7px;
+    border:1.5px solid var(--gold);
+    background:linear-gradient(180deg, var(--navy-3), var(--navy));
+    color:var(--gold-2);
+    cursor:pointer;
+    white-space:nowrap;
+    transition:filter 0.15s ease, opacity 0.15s ease;
+  }
+  .add-team-btn:hover:not(:disabled){ filter:brightness(1.18); }
+  .add-team-btn:active:not(:disabled){ transform:translateY(1px); }
+  .add-team-btn:disabled{ opacity:0.4; cursor:not-allowed; border-color:#3a3167; color:#8f87b8; }
+
+  .teams-panel{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background:linear-gradient(180deg, #142a5e, #0c1a3f);
+    border:4px solid var(--gold);
+    border-radius:16px;
+    padding:14px 12px 14px;
+    box-shadow:0 16px 30px rgba(0,0,0,0.45), inset 0 0 20px rgba(0,0,0,0.35);
+  }
+
+  .teams-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height:calc(100vh - 300px);
+    min-height:80px;
+    overflow-y:auto;
+    padding-right:2px;
+    scrollbar-width:thin;
+    scrollbar-color:var(--gold) transparent;
+  }
+  .teams-list::-webkit-scrollbar{ width:6px; }
+  .teams-list::-webkit-scrollbar-thumb{ background:var(--gold); border-radius:6px; }
+  .teams-list::-webkit-scrollbar-track{ background:transparent; }
+  .teams-empty{
+    font-size:0.76rem;
+    color:#8f87b8;
+    text-align:center;
+    padding:16px 6px;
+    border:1.5px dashed #3a3167;
+    border-radius:10px;
+    line-height:1.5;
+  }
+
+  .team-card{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    padding:9px 32px 9px 14px;
+    border-radius:11px;
+    background:rgba(255,246,223,0.05);
+    border:1.5px solid #3a3167;
+    border-left:6px solid var(--team-color, var(--gold));
+    transition:background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  @keyframes teamActivePulse{
+    0%,100%{ box-shadow:0 0 0 2px var(--gold), 0 0 16px rgba(242,183,5,0.35); }
+    50%{ box-shadow:0 0 0 2px var(--gold), 0 0 28px rgba(242,183,5,0.7); }
+  }
+  .team-card.active{
+    background:rgba(242,183,5,0.10);
+    border-color:var(--gold);
+    animation:teamActivePulse 1.8s ease-in-out infinite;
+  }
+  .team-turn-badge{
+    position:absolute;
+    top:8px; left:14px;
+    font-size:0.58rem;
+    font-weight:700;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--navy);
+    background:var(--gold-2);
+    padding:2px 7px;
+    border-radius:999px;
+    opacity:0;
+    transform:translateY(-4px);
+    transition:opacity 0.2s ease, transform 0.2s ease;
+    pointer-events:none;
+  }
+  .team-card.active .team-turn-badge{
+    opacity:1;
+    transform:translateY(0);
+  }
+  .team-card.active .team-name-input{
+    padding-top:16px;
+  }
+  .team-remove-btn{
+    position:absolute;
+    top:8px; right:8px;
+    width:20px; height:20px;
+    border-radius:50%;
+    border:none;
+    background:rgba(255,246,223,0.08);
+    color:#c9bff0;
+    font-size:0.85rem;
+    line-height:1;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .team-remove-btn:hover{ background:var(--bad); color:#fff; }
+
+  .team-name-input{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:1.5px solid transparent;
+    font-family:'Bebas Neue', sans-serif;
+    font-weight:400;
+    font-size:1.3rem;
+    letter-spacing:0.03em;
+    color:var(--paper);
+    padding:1px 0 3px;
+    outline:none;
+  }
+  .team-name-input:focus{ border-bottom-color:var(--gold); }
+
+  .team-score-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .team-score-label{
+    font-size:0.6rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:#8f87b8;
+    flex:none;
+  }
+  .score-btn{
+    width:30px; height:30px;
+    flex:none;
+    border-radius:8px;
+    border:1.5px solid var(--gold);
+    background:linear-gradient(180deg, var(--navy-3), var(--navy));
+    color:var(--gold-2);
+    font-family:'Bebas Neue', sans-serif;
+    font-size:1.15rem;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    line-height:1;
+    transition:filter 0.1s ease, transform 0.08s ease;
+  }
+  .score-btn:hover{ filter:brightness(1.25); }
+  .score-btn:active{ transform:translateY(1px); }
+
+  .team-score-input{
+    flex:1;
+    min-width:0;
+    text-align:center;
+    background:rgba(255,246,223,0.06);
+    border:2px solid var(--gold);
+    border-radius:9px;
+    font-family:'Bebas Neue', sans-serif;
+    font-size:1.8rem;
+    line-height:1;
+    letter-spacing:0.04em;
+    color:var(--gold-2);
+    text-shadow:0 0 16px rgba(255,221,87,0.6);
+    padding:4px 2px;
+    outline:none;
+    -moz-appearance:textfield;
+  }
+  .team-score-input::-webkit-outer-spin-button,
+  .team-score-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .team-score-input:focus{ border-color:var(--gold-2); }
+
+  .team-turn-btn{
+    width:100%;
+    font-family:'Poppins', sans-serif;
+    font-weight:700;
+    font-size:0.64rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:6px 8px;
+    border-radius:7px;
+    border:1.5px solid var(--gold);
+    background:transparent;
+    color:#c9bff0;
+    cursor:pointer;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .team-turn-btn:hover:not(:disabled){ background:rgba(242,183,5,0.15); color:var(--gold-2); }
+  .team-turn-btn:disabled{
+    cursor:default;
+    background:linear-gradient(180deg, var(--gold-2), var(--gold));
+    color:#3a2400;
+    border-color:var(--gold);
+  }
+
+  .team-name-modal-input{
+    width:100%;
+    background:rgba(255,246,223,0.06);
+    border:2px solid #3a3167;
+    border-radius:10px;
+    color:var(--paper);
+    font-family:'Poppins', sans-serif;
+    font-size:0.95rem;
+    padding:12px 14px;
+    outline:none;
+    margin-bottom:2px;
+  }
+  .team-name-modal-input:focus{ border-color:var(--gold); }
+
+  /* ---------- Puzzle panel (center) ---------- */
   .puzzle-panel{
     display:flex;
     flex-direction:column;
     align-items:center;
     gap:26px;
     padding-top:8px;
+    width:100%;
   }
 
   .board{
@@ -144,31 +408,47 @@
     background:linear-gradient(180deg, #142a5e, #0c1a3f);
     border:4px solid var(--gold);
     border-radius:16px;
-    padding:24px 18px;
+    padding:20px 16px;
     box-shadow:0 16px 30px rgba(0,0,0,0.45), inset 0 0 20px rgba(0,0,0,0.35);
-    min-height:150px;
+    min-height:140px;
     display:flex;
     flex-wrap:wrap;
     align-content:center;
     justify-content:center;
-    gap:10px 0;
+    gap:14px 0;
     position:relative;
   }
   .board.solved{
     border-color:var(--ok);
     box-shadow:0 0 0 4px rgba(63,191,106,0.25), 0 16px 30px rgba(0,0,0,0.45);
   }
+  .board{ perspective:800px; }
+  .board.celebrate::after{
+    content:'';
+    position:absolute;
+    inset:-4px;
+    border-radius:16px;
+    background:radial-gradient(circle at 50% 50%, rgba(255,221,87,0.65), transparent 70%);
+    opacity:0;
+    pointer-events:none;
+  }
+  .board.celebrate::after{ animation:celebrateFlash 1s ease-out; }
+  @keyframes celebrateFlash{
+    0%{ opacity:0; }
+    25%{ opacity:1; }
+    100%{ opacity:0; }
+  }
   .solved-banner{
     position:absolute;
-    top:-14px;
+    top:-16px;
     left:50%;
     transform:translateX(-50%);
     background:var(--ok);
     color:#08240f;
     font-family:'Bebas Neue', sans-serif;
     letter-spacing:0.1em;
-    font-size:0.9rem;
-    padding:4px 16px;
+    font-size:1rem;
+    padding:5px 18px;
     border-radius:999px;
     box-shadow:0 4px 10px rgba(0,0,0,0.4);
     opacity:0;
@@ -179,19 +459,19 @@
   .word-group{
     display:flex;
     gap:5px;
-    margin:0 28px 6px 0;
+    margin:0 22px 8px 0;
   }
 
   .letter-box{
-    width:clamp(30px, 5.5vw, 48px);
-    height:clamp(38px, 7vw, 58px);
+    width:clamp(28px, 4.6vw, 46px);
+    height:clamp(38px, 6.4vw, 58px);
     background:var(--paper);
-    border-radius:4px;
+    border-radius:5px;
     display:flex;
     align-items:center;
     justify-content:center;
     font-family:'Bebas Neue', sans-serif;
-    font-size:clamp(1.4rem, 3.6vw, 2.1rem);
+    font-size:clamp(1.3rem, 3.2vw, 2.05rem);
     color:var(--navy);
     box-shadow:0 3px 0 rgba(0,0,0,0.35), inset 0 -2px 0 rgba(0,0,0,0.08);
   }
@@ -208,11 +488,32 @@
     70%{ transform:scale(1.12); }
     100%{ transform:scale(1); }
   }
+  .letter-box.cascade-anim{
+    animation:cascadeReveal 0.62s cubic-bezier(0.22, 0.85, 0.3, 1.35) both;
+    animation-delay:var(--cascade-delay, 0s);
+  }
+  @keyframes cascadeReveal{
+    0%{
+      transform:scale(0.3) rotateY(90deg);
+      background:var(--gold-2);
+      box-shadow:0 0 22px 8px rgba(242,183,5,0.85);
+    }
+    55%{
+      transform:scale(1.18) rotateY(0deg);
+      background:var(--gold-2);
+      box-shadow:0 0 16px 4px rgba(242,183,5,0.6);
+    }
+    100%{
+      transform:scale(1) rotateY(0deg);
+      background:var(--paper);
+      box-shadow:0 3px 0 rgba(0,0,0,0.35), inset 0 -2px 0 rgba(0,0,0,0.08);
+    }
+  }
   .letter-box.static{
     background:transparent;
     box-shadow:none;
     color:var(--gold-2);
-    width:clamp(10px, 2vw, 16px);
+    width:clamp(8px, 1.6vw, 12px);
   }
 
   .redraw-btn{
@@ -258,6 +559,40 @@
   }
   .select-phrase select:focus{ border-color:var(--gold); }
 
+  /* ---------- Solved (cheat/reveal) button ---------- */
+  .solved-btn{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-family:'Bebas Neue', sans-serif;
+    font-size:1.15rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:#0c2b16;
+    background:linear-gradient(180deg, var(--gold-2), var(--gold));
+    border:2px solid #fff6df;
+    padding:12px 30px;
+    border-radius:12px;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(0,0,0,0.4), 0 0 0 0 rgba(242,183,5,0.6);
+    transition:transform 0.12s ease, box-shadow 0.2s ease, filter 0.15s ease, opacity 0.2s ease;
+    animation:solvedPulse 2.4s ease-in-out infinite;
+  }
+  .solved-btn svg{ width:20px; height:20px; }
+  .solved-btn:hover{ filter:brightness(1.12); transform:translateY(-1px); }
+  .solved-btn:active{ transform:translateY(2px); }
+  .solved-btn:disabled{
+    animation:none;
+    opacity:0.55;
+    cursor:not-allowed;
+    filter:grayscale(0.3);
+    transform:none;
+  }
+  @keyframes solvedPulse{
+    0%,100%{ box-shadow:0 8px 18px rgba(0,0,0,0.4), 0 0 0 0 rgba(242,183,5,0.55); }
+    50%{ box-shadow:0 8px 18px rgba(0,0,0,0.4), 0 0 28px 8px rgba(242,183,5,0.55); }
+  }
+
   /* ---------- Keyboard ---------- */
   .keyboard{
     display:flex;
@@ -282,6 +617,18 @@
     color:#c9bff0;
     margin-bottom:2px;
   }
+  .kb-price-label{
+    font-size:0.66rem;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--gold-2);
+    background:rgba(242,183,5,0.12);
+    border:1px solid rgba(242,183,5,0.5);
+    padding:2px 10px;
+    border-radius:999px;
+    margin:-2px 0 4px;
+  }
   .kb-row{
     display:flex;
     gap:6px;
@@ -289,15 +636,15 @@
     flex-wrap:wrap;
   }
   .key{
-    min-width:34px;
-    height:40px;
-    padding:0 6px;
-    border-radius:8px;
+    min-width:40px;
+    height:46px;
+    padding:0 8px;
+    border-radius:9px;
     border:2px solid var(--gold);
     background:linear-gradient(180deg, var(--navy-3), var(--navy));
     color:var(--paper);
     font-family:'Bebas Neue', sans-serif;
-    font-size:1.05rem;
+    font-size:1.2rem;
     letter-spacing:0.02em;
     cursor:pointer;
     box-shadow:0 4px 0 #6b4d05, 0 6px 10px rgba(0,0,0,0.3);
@@ -323,7 +670,7 @@
     color:#ff9a94;
     opacity:0.55;
   }
-  .kb-row.diacritics .key{ font-size:0.95rem; min-width:30px; }
+  .kb-row.diacritics .key{ font-size:1.05rem; min-width:34px; }
 
   /* ---------- Wheel panel (right) ---------- */
   .wheel-panel{
@@ -334,7 +681,7 @@
 
   .wheel-wrap{
     position:relative;
-    width:min(70vw, 430px);
+    width:min(74vw, 480px);
     aspect-ratio:1/1;
     margin-top:0;
   }
@@ -417,23 +764,62 @@
     opacity:0; visibility:hidden;
     transition:opacity 0.3s ease, visibility 0.3s ease;
     background:radial-gradient(circle at 50% 50%, rgba(12,8,36,0.55), rgba(6,4,20,0.88));
+    overflow:hidden;
   }
   .win-overlay.show{ opacity:1; visibility:visible; }
+
+  .win-flash{
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 50% 50%, rgba(255,247,214,0.95), rgba(255,221,87,0) 70%);
+    opacity:0;
+    pointer-events:none;
+  }
+  .win-flash.flash-on{ animation:flashPop 0.55s ease-out; }
+  .win-overlay.negative .win-flash{
+    background:radial-gradient(circle at 50% 50%, rgba(255,180,170,0.9), rgba(224,71,63,0) 70%);
+  }
+  @keyframes flashPop{
+    0%{ opacity:0.9; }
+    100%{ opacity:0; }
+  }
+
   .win-burst{
     position:absolute; top:50%; left:50%;
     width:1100px; height:1100px; max-width:220vw; max-height:220vw;
     background:repeating-conic-gradient(from 0deg, rgba(255,221,87,0.30) 0deg 4deg, transparent 4deg 18deg);
     border-radius:50%;
-    animation:rayRotate 20s linear infinite;
+    animation:rayRotate 20s linear infinite, rayPulse 1.4s ease-in-out infinite;
     pointer-events:none;
   }
   .win-overlay.negative .win-burst{
     background:repeating-conic-gradient(from 0deg, rgba(224,71,63,0.28) 0deg 4deg, transparent 4deg 18deg);
+    animation:rayRotate 26s linear infinite reverse, rayPulse 1.4s ease-in-out infinite;
   }
   @keyframes rayRotate{
     from{ transform:translate(-50%,-50%) rotate(0deg); }
     to{ transform:translate(-50%,-50%) rotate(360deg); }
   }
+  @keyframes rayPulse{
+    0%,100%{ opacity:0.7; }
+    50%{ opacity:1; }
+  }
+
+  .win-shockwave{
+    position:absolute; top:50%; left:50%;
+    width:60px; height:60px;
+    border-radius:50%;
+    border:3px solid rgba(255,221,87,0.85);
+    transform:translate(-50%,-50%) scale(0);
+    opacity:0;
+    pointer-events:none;
+  }
+  .win-shockwave.ring-on{ animation:shockwaveOut 0.75s cubic-bezier(0.15,0.7,0.35,1); }
+  .win-overlay.negative .win-shockwave{ border-color:rgba(224,71,63,0.85); }
+  @keyframes shockwaveOut{
+    0%{ transform:translate(-50%,-50%) scale(0); opacity:0.9; }
+    100%{ transform:translate(-50%,-50%) scale(14); opacity:0; }
+  }
+
   .win-content{
     position:relative;
     display:flex; flex-direction:column; align-items:center; gap:8px;
@@ -442,12 +828,13 @@
     border:4px solid var(--gold);
     background:linear-gradient(180deg, #1c1444, #0c0824);
     box-shadow:0 0 0 8px rgba(242,183,5,0.18), 0 30px 70px rgba(0,0,0,0.6), 0 0 90px rgba(242,183,5,0.5);
-    animation:winPop 0.6s cubic-bezier(0.22, 1.5, 0.36, 1);
+    animation:winPop 0.6s cubic-bezier(0.22, 1.5, 0.36, 1), contentGlow 1.6s ease-in-out 0.6s infinite;
     max-width:90vw;
   }
   .win-overlay.negative .win-content{
     border-color:var(--bad);
     box-shadow:0 0 0 8px rgba(224,71,63,0.18), 0 30px 70px rgba(0,0,0,0.6), 0 0 90px rgba(224,71,63,0.55);
+    animation:winPop 0.6s cubic-bezier(0.22, 1.5, 0.36, 1), contentGlowNeg 1.6s ease-in-out 0.6s infinite;
   }
   @keyframes winPop{
     0%{ transform:scale(0.3) rotate(-6deg); opacity:0; }
@@ -455,10 +842,25 @@
     75%{ transform:scale(0.95) rotate(-1deg); }
     100%{ transform:scale(1) rotate(0deg); }
   }
+  @keyframes contentGlow{
+    0%,100%{ box-shadow:0 0 0 8px rgba(242,183,5,0.18), 0 30px 70px rgba(0,0,0,0.6), 0 0 90px rgba(242,183,5,0.5); }
+    50%{ box-shadow:0 0 0 10px rgba(242,183,5,0.3), 0 30px 70px rgba(0,0,0,0.6), 0 0 130px rgba(242,183,5,0.85); }
+  }
+  @keyframes contentGlowNeg{
+    0%,100%{ box-shadow:0 0 0 8px rgba(224,71,63,0.18), 0 30px 70px rgba(0,0,0,0.6), 0 0 90px rgba(224,71,63,0.55); }
+    50%{ box-shadow:0 0 0 10px rgba(224,71,63,0.3), 0 30px 70px rgba(0,0,0,0.6), 0 0 130px rgba(224,71,63,0.9); }
+  }
   .win-eyebrow{
     font-size:0.8rem; letter-spacing:0.35em; text-transform:uppercase; color:#c9bff0;
   }
+  .win-value-wrap{
+    position:relative;
+    display:inline-block;
+    overflow:hidden;
+    line-height:1;
+  }
   .win-value{
+    display:block;
     font-family:'Bebas Neue', sans-serif;
     font-size:clamp(2.2rem, 8vw, 4.6rem);
     letter-spacing:0.06em;
@@ -470,6 +872,18 @@
   .win-overlay.negative .win-value{
     background:linear-gradient(180deg, #ffd8d4 0%, var(--bad) 60%, #7a1712 100%);
     -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .win-shine{
+    position:absolute; top:-10%; left:-60%;
+    width:40%; height:120%;
+    background:linear-gradient(115deg, transparent, rgba(255,255,255,0.65), transparent);
+    transform:skewX(-20deg);
+    pointer-events:none;
+  }
+  .win-shine.shine-on{ animation:shineSweep 1.1s ease-in-out 0.3s 2; }
+  @keyframes shineSweep{
+    0%{ left:-60%; }
+    100%{ left:140%; }
   }
   .win-hint{
     margin-top:6px;
@@ -488,16 +902,25 @@
     100%{ transform:translateY(112vh) rotate(600deg); opacity:0; }
   }
 
+  .burst-particle{
+    position:fixed; z-index:260; pointer-events:none; border-radius:50%;
+    animation-name:burstFly; animation-timing-function:cubic-bezier(0.15,0.75,0.35,1); animation-fill-mode:forwards;
+  }
+  @keyframes burstFly{
+    0%{ transform:translate(-50%,-50%) scale(1); opacity:1; }
+    100%{ transform:translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0.15); opacity:0; }
+  }
+
   @media (prefers-reduced-motion: reduce){
-    .win-burst, .win-content, .confetti-piece, .shake, .wheel-wrap.spinning .wheel-outer, .wheel-wrap.spinning .hub{ animation:none !important; }
+    .win-burst, .win-content, .confetti-piece, .burst-particle, .win-flash, .win-shockwave, .win-shine, .shake, .wheel-wrap.spinning .wheel-outer, .wheel-wrap.spinning .hub{ animation:none !important; }
   }
 
   .controls{
-    margin-top:30px;
+    margin-top:22px;
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:16px;
+    gap:14px;
   }
 
   .spin-btn{
@@ -680,6 +1103,9 @@
     .bulb, .rim-lights span{ animation:none; }
     .wheel{ transition:none; }
     .letter-box.reveal-anim{ animation:none; }
+    .letter-box.cascade-anim{ animation:none; }
+    .board.celebrate::after{ animation:none; }
+    .solved-btn{ animation:none; }
   }
 </style>
 </head>
@@ -705,6 +1131,17 @@
 
   <div class="game-layout">
 
+    <!-- FAR LEFT: teams -->
+    <div class="teams-column">
+      <div class="teams-toolbar">
+        <h2>Drużyny</h2>
+        <button class="add-team-btn" id="addTeamBtn">Dodaj</button>
+      </div>
+      <div class="teams-panel">
+        <div class="teams-list" id="teamsList"></div>
+      </div>
+    </div>
+
     <!-- LEFT: puzzle -->
     <div class="puzzle-panel">
       <div class="board" id="board">
@@ -718,6 +1155,13 @@
           <button class="redraw-btn" id="selectPhraseBtn">Wybierz nr hasła</button>
         </div>
       </div>
+
+      <button class="solved-btn" id="solvedBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 6L9 17L4 12" stroke="#0c2b16" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Zgadnięte!
+      </button>
 
       <div class="keyboard" id="keyboard"></div>
     </div>
@@ -756,10 +1200,15 @@
 
 <!-- Win overlay (wynik na środku ekranu) -->
 <div class="win-overlay" id="winOverlay">
+  <div class="win-flash" id="winFlash"></div>
   <div class="win-burst"></div>
+  <div class="win-shockwave" id="winShockwave"></div>
   <div class="win-content">
     <span class="win-eyebrow">Wypadło</span>
-    <span class="win-value" id="winValue">—</span>
+    <span class="win-value-wrap">
+      <span class="win-value" id="winValue">—</span>
+      <span class="win-shine" id="winShine"></span>
+    </span>
     <span class="win-hint">Kliknij, aby zamknąć</span>
   </div>
 </div>
@@ -790,6 +1239,19 @@
   </div>
 </div>
 
+<!-- Modal Drużyny -->
+<div class="modal-overlay" id="teamModalOverlay">
+  <div class="modal">
+    <h2>Dodaj drużynę</h2>
+    <p id="teamModalHint">Wpisz nazwę nowej drużyny. Tablica pomieści maksymalnie 6 drużyn.</p>
+    <input type="text" id="teamNameInput" class="team-name-modal-input" placeholder="np. Drużyna 1" maxlength="24">
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="cancelTeamModalBtn">Anuluj</button>
+      <button class="modal-btn save" id="saveTeamModalBtn">Dodaj</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   // =========================================================
@@ -802,15 +1264,15 @@
     { label:"1000",   color:"#6c2ba6" },
     { label:"200",    color:"#e8743e" },
     { label:"150",    color:"#1d8fc8" },
-    { label:"AGD",    color:"#c41e7a" },
+    { label:"SHOT",   color:"#c41e7a" },
     { label:"300",    color:"#7cb518" },
-    { label:"2000",   color:"#1b2a6b" },
+    { label:"750",    color:"#1b2a6b" },
     { label:"100",    color:"#e0a106" },
     { label:"STRATA TURY", color:"#7a2f6b" },
     { label:"350",    color:"#12a594" },
-    { label:"800",    color:"#d63872" },
+    { label:"600",    color:"#d63872" },
     { label:"250",    color:"#4b3f8a" },
-    { label:"WCZASY", color:"#e8543e" },
+    { label:"SHOT",   color:"#e8543e" },
     { label:"150",    color:"#0e6b6b" }
   ];
 
@@ -899,15 +1361,20 @@
     if(!ctx) return;
     const t = ctx.currentTime;
     const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
     const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(1250 + Math.random() * 260, t);
-    const vol = 0.10 + 0.12 * (strength || 0);
-    gain.gain.setValueAtTime(vol, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.055);
-    osc.connect(gain).connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(560 + Math.random() * 120, t);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1600, t);
+    filter.Q.setValueAtTime(0.7, t);
+    const vol = 0.09 + 0.10 * (strength || 0);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.connect(filter).connect(gain).connect(ctx.destination);
     osc.start(t);
-    osc.stop(t + 0.06);
+    osc.stop(t + 0.09);
   }
 
   function playWhoosh(){
@@ -973,6 +1440,37 @@
     });
   }
 
+  // ---------- Iskry / burst wybuchający z centrum ekranu ----------
+  const BURST_COLORS_POSITIVE = ['#ffdd57', '#f2b705', '#fff6df', '#ffe98a', '#ffffff'];
+  const BURST_COLORS_NEGATIVE = ['#e0473f', '#b3123f', '#ff9a94', '#7a1712'];
+
+  function spawnBurstParticles(count, colors, spread){
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    for(let i = 0; i < count; i++){
+      const piece = document.createElement('div');
+      piece.className = 'burst-particle';
+      const angle = Math.random() * Math.PI * 2;
+      const dist = (spread || 220) + Math.random() * (spread || 220);
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist;
+      piece.style.setProperty('--tx', tx.toFixed(0) + 'px');
+      piece.style.setProperty('--ty', ty.toFixed(0) + 'px');
+      piece.style.left = cx + 'px';
+      piece.style.top = cy + 'px';
+      const size = 4 + Math.random() * 7;
+      piece.style.width = size + 'px';
+      piece.style.height = size + 'px';
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.background = color;
+      piece.style.boxShadow = `0 0 ${6 + size}px ${2 + size / 3}px ${color}`;
+      const dur = 0.6 + Math.random() * 0.55;
+      piece.style.animationDuration = dur + 's';
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), dur * 1000 + 120);
+    }
+  }
+
   // ---------- Konfetti ----------
   const CONFETTI_COLORS = ['#f2b705', '#ffdd57', '#e0473f', '#3fbf6a', '#1d8fc8', '#c41e7a', '#fff6df'];
   function spawnConfetti(count){
@@ -999,7 +1497,16 @@
   const NEGATIVE_LABELS = new Set(['BANKRUT', 'STRATA TURY']);
   const winOverlay = document.getElementById('winOverlay');
   const winValue = document.getElementById('winValue');
+  const winFlash = document.getElementById('winFlash');
+  const winShine = document.getElementById('winShine');
+  const winShockwave = document.getElementById('winShockwave');
   let winHideTimer = null;
+
+  function retriggerAnim(el, className){
+    el.classList.remove(className);
+    void el.offsetWidth;
+    el.classList.add(className);
+  }
 
   function showWinOverlay(label){
     const negative = NEGATIVE_LABELS.has(label);
@@ -1007,19 +1514,36 @@
     winOverlay.classList.toggle('negative', negative);
     winOverlay.classList.add('show');
 
+    retriggerAnim(winFlash, 'flash-on');
+    retriggerAnim(winShine, 'shine-on');
+    retriggerAnim(winShockwave, 'ring-on');
+
+    const numeric = parseInt(label.replace(/\D/g, ''), 10);
+    const bigWin = !negative && !Number.isNaN(numeric) && numeric >= 800;
+
     if(negative){
       playSad();
+      spawnBurstParticles(26, BURST_COLORS_NEGATIVE, 180);
       document.body.classList.remove('shake');
       void document.body.offsetWidth;
       document.body.classList.add('shake');
       setTimeout(() => document.body.classList.remove('shake'), 550);
     } else {
       playFanfare();
-      spawnConfetti(70);
+      spawnConfetti(bigWin ? 110 : 70);
+      spawnBurstParticles(bigWin ? 46 : 30, BURST_COLORS_POSITIVE, bigWin ? 280 : 220);
+
+      if(bigWin){
+        setTimeout(() => {
+          spawnConfetti(60);
+          spawnBurstParticles(30, BURST_COLORS_POSITIVE, 260);
+          retriggerAnim(winShockwave, 'ring-on');
+        }, 320);
+      }
     }
 
     clearTimeout(winHideTimer);
-    winHideTimer = setTimeout(hideWinOverlay, 2800);
+    winHideTimer = setTimeout(hideWinOverlay, bigWin ? 3300 : 2800);
   }
 
   function hideWinOverlay(){
@@ -1039,6 +1563,9 @@
 
   let currentRotation = 0;
   let spinning = false;
+  let spinStartTime = 0;
+  let lastAudioTickTime = 0;
+  let currentWheelPoints = null;
 
   function segmentIndexAtPointer(rotationDeg){
     const mod = ((rotationDeg % 360) + 360) % 360;
@@ -1064,9 +1591,19 @@
       const segIndex = segmentIndexAtPointer(angle);
       if(segIndex !== lastSeg){
         lastSeg = segIndex;
-        playTick();
         pointer.classList.add('bump');
         setTimeout(() => pointer.classList.remove('bump'), 90);
+
+        // W początkowej fazie obrotu koło mija pola bardzo szybko, więc ograniczamy
+        // częstotliwość odtwarzania dźwięku, aby poszczególne "ticki" się na siebie
+        // nie nakładały. W miarę zwalniania koła odstęp minimalny maleje.
+        const now = performance.now();
+        const elapsed = now - spinStartTime;
+        const minGap = elapsed < 1400 ? 90 : (elapsed < 3000 ? 55 : 30);
+        if(now - lastAudioTickTime >= minGap){
+          lastAudioTickTime = now;
+          playTick();
+        }
       }
     }
 
@@ -1082,6 +1619,8 @@
 
     playWhoosh();
     wheelWrap.classList.add('spinning');
+    spinStartTime = performance.now();
+    lastAudioTickTime = 0;
 
     const winnerIndex = Math.floor(Math.random() * N);
     const midAngle = winnerIndex * seg + seg / 2;
@@ -1105,14 +1644,17 @@
       pointer.classList.add('bump');
       setTimeout(() => pointer.classList.remove('bump'), 220);
 
-      resultText.textContent = segments[winnerIndex].label;
+      const wonLabel = segments[winnerIndex].label;
+      resultText.textContent = wonLabel;
       resultCard.classList.add('show');
+
+      currentWheelPoints = /^\d+$/.test(wonLabel) ? parseInt(wonLabel, 10) : null;
 
       wheelWrap.classList.remove('spinning');
       spinning = false;
       btn.disabled = false;
 
-      showWinOverlay(segments[winnerIndex].label);
+      showWinOverlay(wonLabel);
     }, 5300);
   });
 
@@ -1134,18 +1676,23 @@
   const selectPhraseBtn = document.getElementById('selectPhraseBtn');
 
   const VOWEL_ROWS = [
-    ["A","Ą","E"],
-    ["Ę","I","O"],
-    ["Ó","U","Y"]
+    ["A","E","I"],
+    ["O","U","Y"]
   ];
   const CONSONANT_ROWS = [
-    ["B","C","Ć","D","F","G","H"],
-    ["J","K","L","Ł","M","N","Ń"],
-    ["P","Q","R","S","Ś","T","V"],
-    ["W","X","Z","Ź","Ż"]
+    ["B","C","D","F","G","H","J"],
+    ["K","L","M","N","P","Q","R"],
+    ["S","T","V","W","X","Z"]
   ];
+  const SPECIAL_ROWS = [
+    ["Ą","Ć","Ę"],
+    ["Ł","Ń","Ó"],
+    ["Ś","Ź","Ż"]
+  ];
+  const VOWEL_PRICE = 400;
+  const VOWEL_SET = new Set(VOWEL_ROWS.flat());
 
-  function buildKeyboardGroup(label, rows){
+  function buildKeyboardGroup(label, rows, rowExtraClass, priceLabel){
     const group = document.createElement('div');
     group.className = 'kb-group';
 
@@ -1154,9 +1701,16 @@
     labelEl.textContent = label;
     group.appendChild(labelEl);
 
+    if (priceLabel) {
+      const priceEl = document.createElement('div');
+      priceEl.className = 'kb-price-label';
+      priceEl.textContent = priceLabel;
+      group.appendChild(priceEl);
+    }
+
     rows.forEach(row => {
       const rowEl = document.createElement('div');
-      rowEl.className = 'kb-row';
+      rowEl.className = 'kb-row' + (rowExtraClass ? ' ' + rowExtraClass : '');
       row.forEach(letter => {
         const keyEl = document.createElement('button');
         keyEl.className = 'key';
@@ -1173,8 +1727,9 @@
 
   function buildKeyboard(){
     keyboard.innerHTML = '';
-    keyboard.appendChild(buildKeyboardGroup('Samogłoski', VOWEL_ROWS));
+    keyboard.appendChild(buildKeyboardGroup('Samogłoski', VOWEL_ROWS, null, `Cena: ${VOWEL_PRICE} pkt`));
     keyboard.appendChild(buildKeyboardGroup('Spółgłoski', CONSONANT_ROWS));
+    keyboard.appendChild(buildKeyboardGroup('Znaki specjalne', SPECIAL_ROWS, 'diacritics'));
   }
 
   function normalize(str){
@@ -1201,6 +1756,7 @@
     revealed = new Set();
     usedKeys = new Set();
     resetKeyboardState();
+    solvedBtn.disabled = false;
     renderBoard();
   }
 
@@ -1235,19 +1791,88 @@
     const solved = letters.every(ch => revealed.has(ch));
     board.classList.toggle('solved', solved);
     solvedBanner.classList.toggle('show', solved);
+    if (solved) {
+      solvedBtn.disabled = true;
+    }
   }
+
+  // ---------- Przycisk "Zgadnięte!" — odsłania hasło z efektem ----------
+  const solvedBtn = document.getElementById('solvedBtn');
+
+  function renderBoardCascade(){
+    board.querySelectorAll('.word-group').forEach(el => el.remove());
+    const words = currentPhrase.split(' ');
+    let cascadeIndex = 0;
+    words.forEach(word => {
+      const wg = document.createElement('div');
+      wg.className = 'word-group';
+      [...word].forEach(ch => {
+        const box = document.createElement('div');
+        if (LETTER_RE.test(ch)) {
+          box.className = 'letter-box cascade-anim';
+          box.textContent = ch;
+          box.style.setProperty('--cascade-delay', (cascadeIndex * 0.055) + 's');
+          cascadeIndex++;
+        } else {
+          box.className = 'letter-box static';
+          box.textContent = ch;
+        }
+        wg.appendChild(box);
+      });
+      board.appendChild(wg);
+    });
+    checkSolved();
+  }
+
+  function revealAllAndCelebrate(){
+    if (solvedBtn.disabled) return;
+
+    const letters = [...currentPhrase].filter(ch => LETTER_RE.test(ch));
+    letters.forEach(ch => revealed.add(ch));
+
+    keyboard.querySelectorAll('.key').forEach(k => {
+      const letter = k.dataset.letter;
+      if (!k.disabled) {
+        usedKeys.add(letter);
+        if (currentPhrase.includes(letter)) k.classList.add('key-correct');
+      }
+      k.disabled = true;
+    });
+
+    renderBoardCascade();
+
+    retriggerAnim(board, 'celebrate');
+    const cascadeMs = letters.length * 55 + 650;
+    setTimeout(() => spawnConfetti(90), Math.min(cascadeMs, 500));
+
+    document.body.classList.remove('shake');
+    void document.body.offsetWidth;
+    document.body.classList.add('shake');
+    setTimeout(() => document.body.classList.remove('shake'), 550);
+  }
+
+  solvedBtn.addEventListener('click', revealAllAndCelebrate);
 
   function handleGuess(letter, keyEl){
     if (usedKeys.has(letter)) return;
     usedKeys.add(letter);
     keyEl.disabled = true;
 
+    const isVowel = VOWEL_SET.has(letter);
+    if (isVowel) {
+      chargeVowelPrice();
+    }
+
     if (currentPhrase.includes(letter)) {
       revealed.add(letter);
       keyEl.classList.add('key-correct');
       renderBoard(new Set([letter]));
+      if (!isVowel) {
+        awardWheelPointsToActiveTeam();
+      }
     } else {
       keyEl.classList.add('key-wrong');
+      advanceTurn();
     }
   }
 
@@ -1263,14 +1888,19 @@
     revealed = new Set();
     usedKeys = new Set();
     resetKeyboardState();
+    solvedBtn.disabled = false;
     renderBoard();
   }
 
-  redrawBtn.addEventListener('click', startNewRound);
+  redrawBtn.addEventListener('click', () => {
+    startNewRound();
+    resetActiveTeamForNewRound();
+  });
   selectPhraseBtn.addEventListener('click', () => {
     const idx = parseInt(phraseSelect.value, 10);
     if (!Number.isNaN(idx) && phrases[idx] !== undefined) {
       startRoundWithPhrase(phrases[idx]);
+      resetActiveTeamForNewRound();
     }
   });
 
@@ -1320,6 +1950,7 @@
     populatePhraseSelect();
     closeModal();
     startNewRound();
+    resetActiveTeamForNewRound();
   });
 
   // =========================================================
@@ -1388,6 +2019,203 @@
     renderWheel();
     closePktModal();
   });
+
+  // =========================================================
+  // TABLICA DRUŻYN
+  // =========================================================
+  const MAX_TEAMS = 6;
+  const TEAM_COLORS = ['#c81d45', '#0e9c93', '#6c2ba6', '#e8743e', '#1d8fc8', '#7cb518'];
+
+  let teams = [];
+  let teamIdCounter = 0;
+  let activeTeamId = null;
+
+  const teamsList = document.getElementById('teamsList');
+  const addTeamBtn = document.getElementById('addTeamBtn');
+  const teamModalOverlay = document.getElementById('teamModalOverlay');
+  const teamNameInput = document.getElementById('teamNameInput');
+  const cancelTeamModalBtn = document.getElementById('cancelTeamModalBtn');
+  const saveTeamModalBtn = document.getElementById('saveTeamModalBtn');
+  const teamModalHint = document.getElementById('teamModalHint');
+
+  function escapeHtml(str){
+    return str.replace(/[&<>"']/g, ch => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+  }
+
+  function updateAddTeamBtnState(){
+    const atMax = teams.length >= MAX_TEAMS;
+    addTeamBtn.disabled = atMax;
+    addTeamBtn.textContent = atMax ? 'Max. 6' : 'Dodaj';
+  }
+
+  function advanceTurn(){
+    if (teams.length === 0) return;
+    const idx = teams.findIndex(t => t.id === activeTeamId);
+    const nextIdx = idx === -1 ? 0 : (idx + 1) % teams.length;
+    activeTeamId = teams[nextIdx].id;
+    renderTeams();
+  }
+
+  function awardWheelPointsToActiveTeam(){
+    if (currentWheelPoints === null || !activeTeamId) return;
+    const team = teams.find(t => t.id === activeTeamId);
+    if (!team) return;
+    team.points += currentWheelPoints;
+    const input = teamsList.querySelector(`.team-score-input[data-id="${team.id}"]`);
+    if (input) input.value = team.points;
+  }
+
+  function chargeVowelPrice(){
+    if (!activeTeamId) return;
+    const team = teams.find(t => t.id === activeTeamId);
+    if (!team) return;
+    team.points -= VOWEL_PRICE;
+    const input = teamsList.querySelector(`.team-score-input[data-id="${team.id}"]`);
+    if (input) input.value = team.points;
+  }
+
+  function resetActiveTeamForNewRound(){
+    activeTeamId = teams.length ? teams[0].id : null;
+    currentWheelPoints = null;
+    resultCard.classList.remove('show');
+    renderTeams();
+  }
+
+  function renderTeams(){
+    teamsList.innerHTML = '';
+
+    if (teams.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'teams-empty';
+      empty.textContent = 'Brak drużyn. Kliknij „Dodaj drużynę”, aby zacząć.';
+      teamsList.appendChild(empty);
+      updateAddTeamBtnState();
+      return;
+    }
+
+    teams.forEach(team => {
+      const card = document.createElement('div');
+      const isActive = team.id === activeTeamId;
+      card.className = 'team-card' + (isActive ? ' active' : '');
+      card.style.setProperty('--team-color', team.color);
+      card.innerHTML = `
+        <span class="team-turn-badge">Tura</span>
+        <button class="team-remove-btn" type="button" data-id="${team.id}" title="Usuń drużynę">&times;</button>
+        <input type="text" class="team-name-input" value="${escapeHtml(team.name)}" data-id="${team.id}" maxlength="24">
+        <div class="team-score-row">
+          <span class="team-score-label">PKT</span>
+          <button class="score-btn minus" type="button" data-id="${team.id}" aria-label="Odejmij punkty">&minus;</button>
+          <input type="number" class="team-score-input" value="${team.points}" data-id="${team.id}" step="50">
+          <button class="score-btn plus" type="button" data-id="${team.id}" aria-label="Dodaj punkty">+</button>
+        </div>
+        <button class="team-turn-btn" type="button" data-id="${team.id}" ${isActive ? 'disabled' : ''}>
+          ${isActive ? '● Trwa tura' : 'Daj turę tej drużynie'}
+        </button>
+      `;
+      teamsList.appendChild(card);
+    });
+
+    updateAddTeamBtnState();
+  }
+
+  teamsList.addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('.team-remove-btn');
+    if (removeBtn) {
+      const id = removeBtn.dataset.id;
+      teams = teams.filter(t => t.id !== id);
+      if (activeTeamId === id) {
+        activeTeamId = teams.length ? teams[0].id : null;
+      }
+      renderTeams();
+      return;
+    }
+
+    const turnBtn = e.target.closest('.team-turn-btn');
+    if (turnBtn && !turnBtn.disabled) {
+      const id = turnBtn.dataset.id;
+      activeTeamId = id;
+      renderTeams();
+      return;
+    }
+
+    const scoreBtn = e.target.closest('.score-btn');
+    if (scoreBtn) {
+      const id = scoreBtn.dataset.id;
+      const team = teams.find(t => t.id === id);
+      if (!team) return;
+      const delta = scoreBtn.classList.contains('plus') ? 50 : -50;
+      team.points += delta;
+      const input = teamsList.querySelector(`.team-score-input[data-id="${id}"]`);
+      if (input) input.value = team.points;
+    }
+  });
+
+  teamsList.addEventListener('change', (e) => {
+    if (e.target.classList.contains('team-name-input')) {
+      const id = e.target.dataset.id;
+      const team = teams.find(t => t.id === id);
+      if (!team) return;
+      const val = e.target.value.trim();
+      team.name = val.length > 0 ? val : team.name;
+      e.target.value = team.name;
+    }
+
+    if (e.target.classList.contains('team-score-input')) {
+      const id = e.target.dataset.id;
+      const team = teams.find(t => t.id === id);
+      if (!team) return;
+      let val = parseInt(e.target.value, 10);
+      if (Number.isNaN(val)) val = 0;
+      team.points = val;
+      e.target.value = val;
+    }
+  });
+
+  function openTeamModal(){
+    if (teams.length >= MAX_TEAMS) return;
+    teamNameInput.value = `Drużyna ${teams.length + 1}`;
+    teamModalHint.textContent = 'Wpisz nazwę nowej drużyny. Tablica pomieści maksymalnie 6 drużyn.';
+    teamModalOverlay.classList.add('open');
+    setTimeout(() => { teamNameInput.focus(); teamNameInput.select(); }, 50);
+  }
+  function closeTeamModal(){
+    teamModalOverlay.classList.remove('open');
+  }
+
+  addTeamBtn.addEventListener('click', openTeamModal);
+  cancelTeamModalBtn.addEventListener('click', closeTeamModal);
+  teamModalOverlay.addEventListener('click', (e) => {
+    if (e.target === teamModalOverlay) closeTeamModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && teamModalOverlay.classList.contains('open')) closeTeamModal();
+  });
+  teamNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveTeamModalBtn.click();
+    }
+  });
+
+  saveTeamModalBtn.addEventListener('click', () => {
+    if (teams.length >= MAX_TEAMS) {
+      closeTeamModal();
+      return;
+    }
+    const name = teamNameInput.value.trim() || `Drużyna ${teams.length + 1}`;
+    const color = TEAM_COLORS[teams.length % TEAM_COLORS.length];
+    const newTeam = { id: 'team-' + (teamIdCounter++), name, points: 0, color };
+    teams.push(newTeam);
+    if (activeTeamId === null) {
+      activeTeamId = newTeam.id;
+    }
+    renderTeams();
+    closeTeamModal();
+  });
+
+  renderTeams();
 
 })();
 </script>
