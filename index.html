@@ -77,6 +77,15 @@
     right:20px;
     left:auto;
   }
+  .kara-btn{
+    position:fixed;
+    top:76px;
+    right:20px;
+    left:auto;
+    border-color:var(--bad);
+    color:#ffd9d5;
+    background:linear-gradient(180deg, #3a0f14, #1c0508);
+  }
 
   /* ---------- Marquee title ---------- */
   .marquee{
@@ -684,7 +693,23 @@
     width:min(74vw, 480px);
     aspect-ratio:1/1;
     margin-top:0;
+    perspective:1800px;
   }
+
+  .wheel-flipper{
+    position:absolute; inset:0;
+    transform-style:preserve-3d;
+    transform:rotateY(0deg);
+    transition:transform 1.15s cubic-bezier(0.6, -0.28, 0.28, 1.28);
+  }
+  .wheel-flipper.flipped{ transform:rotateY(180deg); }
+
+  .wheel-face{
+    position:absolute; inset:0;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+  }
+  .wheel-face-back{ transform:rotateY(180deg); }
 
   .rim-lights{ position:absolute; inset:-18px; border-radius:50%; pointer-events:none; }
   .rim-lights span{
@@ -703,6 +728,10 @@
     background:conic-gradient(from 0deg, #7a5b0a, var(--gold) 8%, #7a5b0a 16%);
     padding:14px;
     box-shadow:0 0 0 6px #08051a, 0 25px 60px rgba(0,0,0,0.55), var(--ring-shadow);
+  }
+  .wheel-outer-punish{
+    background:conic-gradient(from 0deg, #3a0a12, var(--bad) 8%, #3a0a12 16%);
+    box-shadow:0 0 0 6px #08051a, 0 25px 60px rgba(0,0,0,0.55), 0 0 60px rgba(224,71,63,0.4);
   }
 
   .wheel{
@@ -727,6 +756,25 @@
   @keyframes hubPulse{
     0%,100%{ transform:translate(-50%,-50%) scale(1); }
     50%{ transform:translate(-50%,-50%) scale(1.12); }
+  }
+
+  .wheel-wrap.flipping .wheel-outer,
+  .wheel-wrap.flipping .wheel-outer-punish{
+    animation: wheelFlipGlow 0.58s ease-in-out infinite;
+  }
+  @keyframes wheelFlipGlow{
+    0%,100%{ box-shadow:0 0 0 6px #08051a, 0 25px 60px rgba(0,0,0,0.55), 0 0 55px rgba(224,71,63,0.4); }
+    50%{ box-shadow:0 0 0 6px #08051a, 0 25px 60px rgba(0,0,0,0.55), 0 0 120px rgba(224,71,63,0.9); }
+  }
+  .wheel-wrap.flipping .hub{
+    animation: hubPulse 0.42s ease-in-out infinite;
+  }
+  .wheel-wrap.spinning-punish .wheel-outer-punish{
+    animation: wheelFlipGlow 0.55s ease-in-out infinite;
+  }
+  .wheel-wrap.spinning-punish .rim-lights span{ animation-duration:0.5s; }
+  .wheel-wrap.spinning-punish .hub{
+    animation: hubPulse 0.5s ease-in-out infinite;
   }
 
   .hub{
@@ -913,6 +961,9 @@
 
   @media (prefers-reduced-motion: reduce){
     .win-burst, .win-content, .confetti-piece, .burst-particle, .win-flash, .win-shockwave, .win-shine, .shake, .wheel-wrap.spinning .wheel-outer, .wheel-wrap.spinning .hub{ animation:none !important; }
+    .wheel-flipper{ transition:none; }
+    .wheel-wrap.flipping .wheel-outer, .wheel-wrap.flipping .wheel-outer-punish, .wheel-wrap.spinning-punish .wheel-outer-punish{ animation:none !important; }
+    .punish-btn{ animation:none; }
   }
 
   .controls{
@@ -940,6 +991,48 @@
   .spin-btn:active{ transform:translateY(6px); box-shadow:0 2px 0 #8a6103, 0 6px 12px rgba(0,0,0,0.4); }
   .spin-btn:disabled{ opacity:0.55; cursor:not-allowed; filter:grayscale(0.3); }
   .spin-btn:disabled:active{ transform:none; box-shadow:0 8px 0 #8a6103, 0 14px 24px rgba(0,0,0,0.4); }
+
+  .punish-controls{
+    margin-top:16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+  .punish-btn{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-family:'Bebas Neue', sans-serif;
+    font-size:1.15rem;
+    letter-spacing:0.1em;
+    padding:12px 30px;
+    border:none;
+    border-radius:999px;
+    cursor:pointer;
+    color:#fff3f1;
+    background:linear-gradient(180deg, #e0473f, var(--wine) 60%, #6e0e26);
+    box-shadow:0 7px 0 #6e0e26, 0 12px 22px rgba(0,0,0,0.45);
+    transition:transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+    animation:punishPulse 2.4s ease-in-out infinite;
+  }
+  .punish-btn svg{ width:18px; height:18px; }
+  .punish-btn:hover{ filter:brightness(1.08); }
+  .punish-btn:active{ transform:translateY(5px); box-shadow:0 2px 0 #6e0e26, 0 6px 12px rgba(0,0,0,0.4); }
+  .punish-btn:disabled{ opacity:0.5; cursor:not-allowed; filter:grayscale(0.35); animation:none; }
+  .punish-btn:disabled:active{ transform:none; box-shadow:0 7px 0 #6e0e26, 0 12px 22px rgba(0,0,0,0.45); }
+  @keyframes punishPulse{
+    0%,100%{ box-shadow:0 7px 0 #6e0e26, 0 12px 22px rgba(0,0,0,0.45), 0 0 0 0 rgba(224,71,63,0.5); }
+    50%{ box-shadow:0 7px 0 #6e0e26, 0 12px 22px rgba(0,0,0,0.45), 0 0 24px 6px rgba(224,71,63,0.55); }
+  }
+  .punish-price{
+    font-family:'Poppins', sans-serif;
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:#ff9a94;
+  }
 
   .result{ min-height:66px; display:flex; align-items:center; justify-content:center; }
   .result-card{
@@ -1052,6 +1145,11 @@
   .modal-btn.save:hover{ filter:brightness(1.08); }
 
   .pkt-modal{ max-width:520px; }
+  .kara-modal{
+    border-color:var(--bad);
+    box-shadow:0 20px 50px rgba(0,0,0,0.6), 0 0 60px rgba(224,71,63,0.35);
+  }
+  .kara-modal h2{ color:#ff9a94; }
   .pkt-list{
     max-height:50vh;
     overflow-y:auto;
@@ -1121,6 +1219,11 @@
   PKT
 </button>
 
+<button class="add-btn kara-btn" id="openKaraModalBtn">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  KARA
+</button>
+
 <div class="stage">
 
   <div class="marquee">
@@ -1170,11 +1273,24 @@
     <div class="wheel-panel">
       <div class="wheel-wrap" id="wheelWrap">
         <div class="rim-lights" id="rimLights"></div>
-        <div class="wheel-outer">
-          <div class="wheel" id="wheel">
-            <svg viewBox="0 0 600 600" id="wheelSvg"></svg>
+
+        <div class="wheel-flipper" id="wheelFlipper">
+          <div class="wheel-face wheel-face-front">
+            <div class="wheel-outer">
+              <div class="wheel" id="wheel">
+                <svg viewBox="0 0 600 600" id="wheelSvg"></svg>
+              </div>
+            </div>
+          </div>
+          <div class="wheel-face wheel-face-back">
+            <div class="wheel-outer wheel-outer-punish">
+              <div class="wheel" id="punishWheel">
+                <svg viewBox="0 0 600 600" id="punishWheelSvg"></svg>
+              </div>
+            </div>
           </div>
         </div>
+
         <div class="hub"></div>
         <svg class="pointer" id="pointer" viewBox="0 0 38 46" xmlns="http://www.w3.org/2000/svg">
           <path d="M19 46 L2 12 A19 19 0 1 1 36 12 Z" fill="#f2b705" stroke="#0c0824" stroke-width="2.5"/>
@@ -1190,6 +1306,16 @@
             <span id="resultText">—</span>
           </div>
         </div>
+      </div>
+
+      <div class="punish-controls">
+        <button class="punish-btn" id="punishBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L14.5 9H21.5L15.7 13.4L18 20.5L12 16.3L6 20.5L8.3 13.4L2.5 9H9.5L12 2Z" fill="#fff0ee"/>
+          </svg>
+          Zakręć kołem kary
+        </button>
+        <div class="punish-price" id="punishPriceLabel">Cena: 1000 pkt</div>
       </div>
     </div>
 
@@ -1235,6 +1361,19 @@
     <div class="modal-actions">
       <button class="modal-btn cancel" id="cancelPktModalBtn">Anuluj</button>
       <button class="modal-btn save" id="savePktModalBtn">Zapisz</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal KARA -->
+<div class="modal-overlay" id="karaModalOverlay">
+  <div class="modal pkt-modal kara-modal">
+    <h2>Edytuj pola koła kary</h2>
+    <p>Zmień treść i kolor każdego pola koła kary. Zakręcenie tym kołem kosztuje drużynę <span id="karaPriceHint">1000</span> pkt.</p>
+    <div class="pkt-list" id="karaList"></div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="cancelKaraModalBtn">Anuluj</button>
+      <button class="modal-btn save" id="saveKaraModalBtn">Zapisz</button>
     </div>
   </div>
 </div>
@@ -1287,13 +1426,15 @@
 
   const svg = document.getElementById('wheelSvg');
 
-  function renderWheel(){
+  function buildWheelSvgMarkup(segmentsArr){
+    const count = segmentsArr.length;
+    const segAngle = 360 / count;
     let markup = '';
 
-    segments.forEach((s, i) => {
-      const a0 = i * seg;
-      const a1 = (i + 1) * seg;
-      const mid = a0 + seg / 2;
+    segmentsArr.forEach((s, i) => {
+      const a0 = i * segAngle;
+      const a1 = (i + 1) * segAngle;
+      const mid = a0 + segAngle / 2;
       const p0 = toXY(a0, r);
       const p1 = toXY(a1, r);
 
@@ -1312,10 +1453,34 @@
                   fill="#fff6df" style="paint-order: stroke; stroke:#0c0824; stroke-width:3px; letter-spacing:1px;">${s.label}</text>`;
     });
 
-    svg.innerHTML = markup;
+    return markup;
+  }
+
+  function renderWheel(){
+    svg.innerHTML = buildWheelSvgMarkup(segments);
   }
 
   renderWheel();
+
+  // ---------- Koło kary (druga strona) ----------
+  const KARA_PRICE = 1000;
+  const punishSegments = Array.from({ length: 16 }, (_, i) => ({
+    label: "SHOT",
+    color: i % 2 === 0 ? "#7a0f24" : "#1a1418"
+  }));
+  const PN = punishSegments.length;
+  const punishSeg = 360 / PN;
+
+  const punishSvg = document.getElementById('punishWheelSvg');
+  function renderPunishWheel(){
+    punishSvg.innerHTML = buildWheelSvgMarkup(punishSegments);
+  }
+  renderPunishWheel();
+
+  const punishPriceLabel = document.getElementById('punishPriceLabel');
+  if (punishPriceLabel) punishPriceLabel.textContent = `Cena: ${KARA_PRICE} pkt`;
+  const karaPriceHint = document.getElementById('karaPriceHint');
+  if (karaPriceHint) karaPriceHint.textContent = KARA_PRICE;
 
   // ---------- Marquee bulbs ----------
   const bulbsBox = document.getElementById('bulbs');
@@ -1494,7 +1659,7 @@
   }
 
   // ---------- Overlay wyniku (środek ekranu) ----------
-  const NEGATIVE_LABELS = new Set(['BANKRUT', 'STRATA TURY']);
+  const NEGATIVE_LABELS = new Set(['BANKRUT', 'STRATA TURY', 'SHOT']);
   const winOverlay = document.getElementById('winOverlay');
   const winValue = document.getElementById('winValue');
   const winFlash = document.getElementById('winFlash');
@@ -1611,9 +1776,10 @@
   }
 
   btn.addEventListener('click', () => {
-    if(spinning) return;
+    if(spinning || flipping || punishSpinning || flipped) return;
     spinning = true;
     btn.disabled = true;
+    punishBtn.disabled = true;
     resultCard.classList.remove('show');
     hideWinOverlay();
 
@@ -1653,9 +1819,133 @@
       wheelWrap.classList.remove('spinning');
       spinning = false;
       btn.disabled = false;
+      punishBtn.disabled = false;
 
       showWinOverlay(wonLabel);
     }, 5300);
+  });
+
+  // ---------- Koło kary: flip + spin ----------
+  const wheelFlipper = document.getElementById('wheelFlipper');
+  const punishWheel = document.getElementById('punishWheel');
+  const punishBtn = document.getElementById('punishBtn');
+
+  let flipped = false;
+  let flipping = false;
+  let punishSpinning = false;
+  let punishRotation = 0;
+  let punishSpinStartTime = 0;
+  let punishLastAudioTickTime = 0;
+
+  function punishSegmentIndexAtPointer(rotationDeg){
+    const mod = ((rotationDeg % 360) + 360) % 360;
+    const normalized = ((360 - mod) % 360 + 360) % 360;
+    return Math.floor(normalized / punishSeg);
+  }
+
+  function punishTickLoop(lastSeg){
+    if(!punishSpinning) return;
+
+    const style = getComputedStyle(punishWheel).transform;
+    let angle = null;
+    if(style && style !== 'none'){
+      const match = style.match(/matrix\(([^)]+)\)/);
+      if(match){
+        const parts = match[1].split(',').map(Number);
+        const a = parts[0], b = parts[1];
+        angle = (Math.atan2(b, a) * 180 / Math.PI + 360) % 360;
+      }
+    }
+
+    if(angle !== null){
+      const segIndex = punishSegmentIndexAtPointer(angle);
+      if(segIndex !== lastSeg){
+        lastSeg = segIndex;
+        pointer.classList.add('bump');
+        setTimeout(() => pointer.classList.remove('bump'), 90);
+
+        const now = performance.now();
+        const elapsed = now - punishSpinStartTime;
+        const minGap = elapsed < 1400 ? 90 : (elapsed < 3000 ? 55 : 30);
+        if(now - punishLastAudioTickTime >= minGap){
+          punishLastAudioTickTime = now;
+          playTick();
+        }
+      }
+    }
+
+    requestAnimationFrame(() => punishTickLoop(lastSeg));
+  }
+
+  function spinPunishWheel(){
+    punishSpinning = true;
+    wheelWrap.classList.add('spinning-punish');
+    playWhoosh();
+    punishSpinStartTime = performance.now();
+    punishLastAudioTickTime = 0;
+
+    const winnerIndex = Math.floor(Math.random() * PN);
+    const midAngle = winnerIndex * punishSeg + punishSeg / 2;
+
+    const maxJitter = punishSeg * 0.32;
+    const jitter = (Math.random() * 2 - 1) * maxJitter;
+
+    const targetMod = ((360 - (midAngle + jitter)) % 360 + 360) % 360;
+    const currentMod = ((punishRotation % 360) + 360) % 360;
+    let delta = targetMod - currentMod;
+    if (delta < 0) delta += 360;
+
+    const extraSpins = 6 + Math.floor(Math.random() * 3);
+    punishRotation += delta + extraSpins * 360;
+
+    const startSeg = punishSegmentIndexAtPointer(punishRotation - (delta + extraSpins * 360));
+    punishWheel.style.transform = `rotate(${punishRotation}deg)`;
+    requestAnimationFrame(() => punishTickLoop(startSeg));
+
+    setTimeout(() => {
+      pointer.classList.add('bump');
+      setTimeout(() => pointer.classList.remove('bump'), 220);
+
+      const wonLabel = punishSegments[winnerIndex].label;
+      resultText.textContent = wonLabel;
+      resultCard.classList.add('show');
+
+      wheelWrap.classList.remove('spinning-punish');
+      punishSpinning = false;
+
+      showWinOverlay(wonLabel);
+
+      // po chwili wracamy na główną stronę koła
+      setTimeout(() => {
+        wheelFlipper.classList.remove('flipped');
+        flipped = false;
+        btn.disabled = false;
+        punishBtn.disabled = false;
+      }, 2600);
+    }, 5300);
+  }
+
+  punishBtn.addEventListener('click', () => {
+    if(spinning || flipping || punishSpinning || flipped) return;
+    flipping = true;
+    btn.disabled = true;
+    punishBtn.disabled = true;
+    resultCard.classList.remove('show');
+    hideWinOverlay();
+
+    chargeKaraPrice();
+
+    playWhoosh();
+    wheelWrap.classList.add('flipping');
+    wheelFlipper.classList.add('flipped');
+    flipped = true;
+    spawnBurstParticles(34, BURST_COLORS_NEGATIVE, 240);
+
+    setTimeout(() => {
+      wheelWrap.classList.remove('flipping');
+      flipping = false;
+      spinPunishWheel();
+    }, 1150);
   });
 
   // =========================================================
@@ -2021,6 +2311,73 @@
   });
 
   // =========================================================
+  // MODAL — KARA (edycja pól koła kary)
+  // =========================================================
+  const openKaraModalBtn = document.getElementById('openKaraModalBtn');
+  const cancelKaraModalBtn = document.getElementById('cancelKaraModalBtn');
+  const saveKaraModalBtn = document.getElementById('saveKaraModalBtn');
+  const karaModalOverlay = document.getElementById('karaModalOverlay');
+  const karaList = document.getElementById('karaList');
+
+  function openKaraModal(){
+    karaList.innerHTML = '';
+    punishSegments.forEach((s, i) => {
+      const row = document.createElement('div');
+      row.className = 'pkt-row';
+
+      const idx = document.createElement('span');
+      idx.className = 'pkt-idx';
+      idx.textContent = (i + 1) + '.';
+
+      const textInput = document.createElement('input');
+      textInput.type = 'text';
+      textInput.value = s.label;
+      textInput.dataset.field = 'label';
+      textInput.maxLength = 18;
+
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = s.color;
+      colorInput.dataset.field = 'color';
+
+      row.appendChild(idx);
+      row.appendChild(textInput);
+      row.appendChild(colorInput);
+      karaList.appendChild(row);
+    });
+
+    karaModalOverlay.classList.add('open');
+  }
+  function closeKaraModal(){
+    karaModalOverlay.classList.remove('open');
+  }
+
+  openKaraModalBtn.addEventListener('click', openKaraModal);
+  cancelKaraModalBtn.addEventListener('click', closeKaraModal);
+  karaModalOverlay.addEventListener('click', (e) => {
+    if (e.target === karaModalOverlay) closeKaraModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && karaModalOverlay.classList.contains('open')) closeKaraModal();
+  });
+
+  saveKaraModalBtn.addEventListener('click', () => {
+    const rows = karaList.querySelectorAll('.pkt-row');
+    rows.forEach((row, i) => {
+      const textInput = row.querySelector('input[type="text"]');
+      const colorInput = row.querySelector('input[type="color"]');
+      const newLabel = textInput.value.trim().toLocaleUpperCase('pl-PL');
+      if (newLabel.length > 0) {
+        punishSegments[i].label = newLabel;
+      }
+      punishSegments[i].color = colorInput.value;
+    });
+
+    renderPunishWheel();
+    closeKaraModal();
+  });
+
+  // =========================================================
   // TABLICA DRUŻYN
   // =========================================================
   const MAX_TEAMS = 6;
@@ -2072,6 +2429,15 @@
     const team = teams.find(t => t.id === activeTeamId);
     if (!team) return;
     team.points -= VOWEL_PRICE;
+    const input = teamsList.querySelector(`.team-score-input[data-id="${team.id}"]`);
+    if (input) input.value = team.points;
+  }
+
+  function chargeKaraPrice(){
+    if (!activeTeamId) return;
+    const team = teams.find(t => t.id === activeTeamId);
+    if (!team) return;
+    team.points -= KARA_PRICE;
     const input = teamsList.querySelector(`.team-score-input[data-id="${team.id}"]`);
     if (input) input.value = team.points;
   }
