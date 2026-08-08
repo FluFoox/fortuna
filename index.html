@@ -602,6 +602,65 @@
     50%{ box-shadow:0 8px 18px rgba(0,0,0,0.4), 0 0 28px 8px rgba(242,183,5,0.55); }
   }
 
+  .solved-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+  }
+
+  .time-btn, .stop-btn{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-family:'Bebas Neue', sans-serif;
+    font-size:1.05rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    padding:11px 22px;
+    border-radius:12px;
+    cursor:pointer;
+    transition:transform 0.12s ease, box-shadow 0.2s ease, filter 0.15s ease, opacity 0.2s ease;
+  }
+  .time-btn svg, .stop-btn svg{ width:18px; height:18px; }
+  .time-btn:hover, .stop-btn:hover{ filter:brightness(1.12); transform:translateY(-1px); }
+  .time-btn:active, .stop-btn:active{ transform:translateY(2px); }
+
+  .time-btn{
+    color:#eaf6ff;
+    background:linear-gradient(180deg, #2a9fd8, #135a8a);
+    border:2px solid #bfe6ff;
+    box-shadow:0 8px 18px rgba(0,0,0,0.4), 0 0 0 0 rgba(29,143,200,0.6);
+  }
+  .time-btn.active{
+    animation:timePulse 2s ease-in-out infinite;
+  }
+  @keyframes timePulse{
+    0%,100%{ box-shadow:0 8px 18px rgba(0,0,0,0.4), 0 0 0 0 rgba(29,143,200,0.55); }
+    50%{ box-shadow:0 8px 18px rgba(0,0,0,0.4), 0 0 26px 8px rgba(29,143,200,0.75); }
+  }
+  .time-btn:disabled{
+    animation:none;
+    opacity:0.55;
+    cursor:not-allowed;
+    filter:grayscale(0.3);
+    transform:none;
+  }
+
+  .stop-btn{
+    color:#fff0ee;
+    background:linear-gradient(180deg, #e0473f, var(--wine) 60%, #6e0e26);
+    border:2px solid #ffb8b2;
+    box-shadow:0 8px 18px rgba(0,0,0,0.4);
+  }
+  .stop-btn:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+    filter:grayscale(0.35);
+    transform:none;
+  }
+
   /* ---------- Keyboard ---------- */
   .keyboard{
     display:flex;
@@ -1204,6 +1263,7 @@
     .letter-box.cascade-anim{ animation:none; }
     .board.celebrate::after{ animation:none; }
     .solved-btn{ animation:none; }
+    .time-btn.active{ animation:none; }
   }
 </style>
 </head>
@@ -1259,12 +1319,27 @@
         </div>
       </div>
 
-      <button class="solved-btn" id="solvedBtn" type="button">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 6L9 17L4 12" stroke="#0c2b16" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Zgadnięte!
-      </button>
+      <div class="solved-row">
+        <button class="solved-btn" id="solvedBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="#0c2b16" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Zgadnięte!
+        </button>
+        <button class="time-btn" id="timeBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="#eaf6ff" stroke-width="2"/>
+            <path d="M12 7v5l3.5 2" stroke="#eaf6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Time
+        </button>
+        <button class="stop-btn" id="stopBtn" type="button" disabled>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="12" height="12" rx="2" fill="#fff0ee"/>
+          </svg>
+          STOP
+        </button>
+      </div>
 
       <div class="keyboard" id="keyboard"></div>
     </div>
@@ -2042,6 +2117,7 @@
   }
 
   function startRoundWithPhrase(phraseText){
+    stopAutoReveal();
     currentPhrase = normalize(phraseText);
     revealed = new Set();
     usedKeys = new Set();
@@ -2117,6 +2193,8 @@
   function revealAllAndCelebrate(){
     if (solvedBtn.disabled) return;
 
+    stopAutoReveal();
+
     const letters = [...currentPhrase].filter(ch => LETTER_RE.test(ch));
     letters.forEach(ch => revealed.add(ch));
 
@@ -2142,6 +2220,66 @@
   }
 
   solvedBtn.addEventListener('click', revealAllAndCelebrate);
+
+  // ---------- Przyciski "Time" / "STOP" — automatyczne odsłanianie liter co sekundę ----------
+  const timeBtn = document.getElementById('timeBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  let autoRevealInterval = null;
+
+  function stopAutoReveal(){
+    if (autoRevealInterval) {
+      clearInterval(autoRevealInterval);
+      autoRevealInterval = null;
+    }
+    timeBtn.classList.remove('active');
+    timeBtn.disabled = false;
+    stopBtn.disabled = true;
+  }
+
+  function revealRandomLetter(){
+    const letters = [...currentPhrase].filter(ch => LETTER_RE.test(ch));
+    const uniqueLetters = [...new Set(letters)];
+    const remaining = uniqueLetters.filter(ch => !revealed.has(ch));
+
+    if (remaining.length === 0) {
+      stopAutoReveal();
+      return;
+    }
+
+    const letter = remaining[Math.floor(Math.random() * remaining.length)];
+    revealed.add(letter);
+
+    const keyEl = keyboard.querySelector(`.key[data-letter="${letter}"]`);
+    if (keyEl && !keyEl.disabled) {
+      usedKeys.add(letter);
+      keyEl.classList.add('key-correct');
+      keyEl.disabled = true;
+    }
+
+    renderBoard(new Set([letter]));
+
+    const stillRemaining = uniqueLetters.some(ch => !revealed.has(ch));
+    if (!stillRemaining) {
+      stopAutoReveal();
+    }
+  }
+
+  timeBtn.addEventListener('click', () => {
+    if (autoRevealInterval || solvedBtn.disabled) return;
+
+    const letters = [...currentPhrase].filter(ch => LETTER_RE.test(ch));
+    const uniqueLetters = [...new Set(letters)];
+    if (uniqueLetters.every(ch => revealed.has(ch))) return;
+
+    timeBtn.disabled = true;
+    timeBtn.classList.add('active');
+    stopBtn.disabled = false;
+
+    revealRandomLetter();
+    autoRevealInterval = setInterval(revealRandomLetter, 4000);
+  });
+
+  stopBtn.addEventListener('click', stopAutoReveal);
 
   function handleGuess(letter, keyEl){
     if (usedKeys.has(letter)) return;
@@ -2174,6 +2312,7 @@
   }
 
   function startNewRound(){
+    stopAutoReveal();
     currentPhrase = pickRandomPhrase();
     revealed = new Set();
     usedKeys = new Set();
