@@ -661,6 +661,53 @@
     transform:none;
   }
 
+  /* ---------- Guess whole phrase button ---------- */
+  .guess-btn{
+    color:#f4ecff;
+    background:linear-gradient(180deg, #8a5ce0, #4a2a96 60%, #2a1660);
+    border:2px solid #d9c8ff;
+    box-shadow:0 8px 18px rgba(0,0,0,0.4);
+  }
+  .guess-btn:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+    filter:grayscale(0.35);
+    transform:none;
+  }
+
+  .guess-modal-input{
+    width:100%;
+    background:rgba(255,246,223,0.06);
+    border:2px solid #3a3167;
+    border-radius:10px;
+    color:var(--paper);
+    font-family:'Bebas Neue', sans-serif;
+    letter-spacing:0.05em;
+    font-size:1.15rem;
+    text-transform:uppercase;
+    padding:12px 14px;
+    outline:none;
+    margin-bottom:2px;
+  }
+  .guess-modal-input:focus{ border-color:var(--gold); }
+  .guess-modal-input.shake-input{ animation:shakeScreen 0.4s; }
+
+  .guess-error{
+    display:none;
+    align-items:center;
+    gap:8px;
+    margin-top:10px;
+    padding:9px 12px;
+    border-radius:9px;
+    background:rgba(224,71,63,0.14);
+    border:1.5px solid var(--bad);
+    color:#ffb8b2;
+    font-size:0.8rem;
+    font-weight:600;
+  }
+  .guess-error.show{ display:flex; }
+  .guess-error svg{ width:16px; height:16px; flex:none; }
+
   /* ---------- Keyboard ---------- */
   .keyboard{
     display:flex;
@@ -1339,6 +1386,13 @@
           </svg>
           STOP
         </button>
+        <button class="guess-btn" id="guessBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="#f4ecff" stroke-width="2"/>
+            <path d="M21 21l-4.3-4.3" stroke="#f4ecff" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Zgadnij
+        </button>
       </div>
 
       <div class="keyboard" id="keyboard"></div>
@@ -1462,6 +1516,27 @@
     <div class="modal-actions">
       <button class="modal-btn cancel" id="cancelTeamModalBtn">Anuluj</button>
       <button class="modal-btn save" id="saveTeamModalBtn">Dodaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Zgadnij hasło -->
+<div class="modal-overlay" id="guessModalOverlay">
+  <div class="modal">
+    <h2>Zgadnij hasło</h2>
+    <p>Wpisz całe hasło. Jeśli zgadniesz poprawnie, plansza zostanie odsłonięta.</p>
+    <input type="text" id="guessInput" class="guess-modal-input" placeholder="Wpisz hasło...">
+    <div class="guess-error" id="guessError">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="9" stroke="#ffb8b2" stroke-width="2"/>
+        <path d="M12 8v5" stroke="#ffb8b2" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="16" r="1" fill="#ffb8b2"/>
+      </svg>
+      <span>Niepoprawne hasło. Spróbuj ponownie.</span>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="cancelGuessModalBtn">Anuluj</button>
+      <button class="modal-btn save" id="submitGuessBtn">Sprawdź</button>
     </div>
   </div>
 </div>
@@ -2336,6 +2411,77 @@
   buildKeyboard();
   populatePhraseSelect();
   startNewRound();
+
+  // =========================================================
+  // MODAL — Zgadnij całe hasło
+  // =========================================================
+  const guessBtn = document.getElementById('guessBtn');
+  const guessModalOverlay = document.getElementById('guessModalOverlay');
+  const guessInput = document.getElementById('guessInput');
+  const guessError = document.getElementById('guessError');
+  const cancelGuessModalBtn = document.getElementById('cancelGuessModalBtn');
+  const submitGuessBtn = document.getElementById('submitGuessBtn');
+
+  function normalizeGuess(str){
+    return normalize(str.trim().replace(/\s+/g, ' '));
+  }
+
+  function openGuessModal(){
+    if (solvedBtn.disabled) return;
+    guessInput.value = '';
+    guessError.classList.remove('show');
+    guessModalOverlay.classList.add('open');
+    setTimeout(() => guessInput.focus(), 50);
+  }
+  function closeGuessModal(){
+    guessModalOverlay.classList.remove('open');
+    guessError.classList.remove('show');
+  }
+
+  guessBtn.addEventListener('click', openGuessModal);
+  cancelGuessModalBtn.addEventListener('click', closeGuessModal);
+  guessModalOverlay.addEventListener('click', (e) => {
+    if (e.target === guessModalOverlay) closeGuessModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && guessModalOverlay.classList.contains('open')) closeGuessModal();
+  });
+  guessInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitGuessBtn.click();
+    }
+  });
+  guessInput.addEventListener('input', () => {
+    guessError.classList.remove('show');
+  });
+
+  submitGuessBtn.addEventListener('click', () => {
+    const raw = guessInput.value;
+    const guess = normalizeGuess(raw);
+
+    if (guess.length === 0) {
+      guessInput.focus();
+      return;
+    }
+
+    if (solvedBtn.disabled) {
+      closeGuessModal();
+      return;
+    }
+
+    if (guess === currentPhrase) {
+      closeGuessModal();
+      revealAllAndCelebrate();
+    } else {
+      guessError.classList.add('show');
+      guessInput.classList.remove('shake-input');
+      void guessInput.offsetWidth;
+      guessInput.classList.add('shake-input');
+      guessInput.focus();
+      guessInput.select();
+    }
+  });
 
   // =========================================================
   // MODAL — Dodaj hasła
